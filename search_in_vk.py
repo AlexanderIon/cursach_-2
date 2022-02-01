@@ -1,7 +1,7 @@
 import vk_api
 from vk_api import VkUpload
 
-token_my = "  "
+token_my = ""
 vk_my = vk_api.VkApi(token=token_my, api_version='5.131')
 
 
@@ -38,7 +38,7 @@ def search_users(q="", offset=0, count=5, sex=0, status=0, age_from=0, age_to=0,
         2- список list_id"""
     result = vk_my.method(method='users.search', values={'q': q,
                                                          'offset': offset,
-                                                         # 'count': count,
+                                                         'count': count,
 
                                                          'sex': sex,
                                                          # 'country': 1,

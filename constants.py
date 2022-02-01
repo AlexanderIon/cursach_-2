@@ -1,0 +1,10 @@
+flag_gender = False
+flag_relation = False
+flag_city = False
+flag_age = False
+flag_hi = False
+age = None
+relation = None
+gender = None
+city = None
+count_res = 0

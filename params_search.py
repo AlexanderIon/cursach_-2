@@ -4,29 +4,26 @@ import vk_api
 from patterns import pattern_hi, pattern_yes, pattern_age, pattern_gender_M, pattern_gender_W
 from vk_api.longpoll import VkLongPoll, VkEventType
 from search_in_vk import get_id_city, create_age, search_users, get_id_photo, get_into_user, get_user_photo
+from db import engine, get_connection, get_serial_id_user, get_set_db_ids,get_new_id, fill_out_found_users
+from constants import flag_hi, flag_age, flag_city, flag_gender, flag_relation, age, city, relation, gender, count_res
 
 
 def write_msg(user_id, message,attachemt=None):
     vk.method('messages.send', {'user_id': user_id, 'message': message, 'random_id': randrange(10 ** 7), 'attachment': attachemt})
 
 
-token = " "
+token = ""
 
 vk = vk_api.VkApi(token=token, api_version='5.131')
 longpoll = VkLongPoll(vk)
 
-flag_hi = False
-flag_gender = False
-flag_relation = False
-flag_city = False
-flag_age = False
-age = None
-relation = None
-gender = None
-city = None
-count_res = 0
+
+
+
 for event in longpoll.listen():
+
     if event.type == VkEventType.MESSAGE_NEW:
+
 
         if event.to_me:
             request = event.text
@@ -38,12 +35,18 @@ for event in longpoll.listen():
             word_find_gander_W = re.match(pattern_gender_W, request)
             id_user = event.user_id
             info_user = get_into_user(id_user)
+            # connaction = get_connection(engine)
+
+
+
+
 
             if word_find_hi is not None:
 
                 write_msg(id_user, f"Привет , {info_user['first_name']}.\nХотите найти новых знакомых?")
 
                 flag_hi = True
+
 
             elif (word_find_yes is not None) and (flag_hi is True):
                 write_msg(id_user, f"{info_user['first_name']}, укажите параметры поиска:\n Возраст ?  ")
@@ -82,10 +85,59 @@ for event in longpoll.listen():
 
             elif (age is not None and city is not None and gender is not None) and (word_find_yes is not None):
                 print("РЕЗУЛЬТАТ ПОИСКА")
-                print(f"Смещение offset {count_res}")
-                flag_city = False
-                result = search_users(cityId=int(city), offset=count_res, age_from=age[0], age_to=age[1], sex=gender)
-                count_users, list_id_search = result
+                connection = get_connection(engine)
+
+                if connection is not None:
+                    id_user = str(id_user)
+                    serial_id_user = get_serial_id_user(id_user, connection)
+                    # print(f'serial_id {serial_id_user}')
+                    # print("ТАБЛИЦА found_users")
+                    # print(connection.execute("""SELECT * FROM found_users""").fetchall())
+                    #
+                    # print("ТАБЛИЦА List_users")
+                    # print(connection.execute("""SELECT * FROM list_users""").fetchall())
+
+                    set_ids_db_for_user = get_set_db_ids(serial_id_user, connection)
+                    print(f"Данные из базы {set_ids_db_for_user}")
+                    result = search_users(cityId=int(city), offset=count_res, age_from=age[0], age_to=age[1],
+                                          sex=gender)
+                    count_users, list_id_search = result
+                    list_id_search = [str(element) for element in list_id_search]
+
+
+
+                    print(f"result {list_id_search}")
+                    list_id_search = get_new_id(set_ids_db_for_user, list_id_search)
+                    print(f"Сравнение базы и найденные id {list_id_search}")
+                    w = 5
+                    while list_id_search is None:
+                        result = search_users(cityId=int(city), offset=w, age_from=age[0], age_to=age[1],
+                                              sex=gender)
+                        count_users, list_id_search = result
+                        list_id_search = [str(element) for element in list_id_search]
+                        print(f"ДАННЫЕ которые были {list_id_search}")
+                        list_id_search = get_new_id(set_ids_db_for_user, list_id_search)
+                        w += 5
+                    print(f"NEW IDs {list_id_search}")
+
+                    fill_out_found_users(serial_id_user, list_id_search, connection)
+
+                    print("++++++++++")
+                    print("ТАБЛИЦА found_users")
+                    print(connection.execute("""SELECT * FROM found_users""").fetchall())
+
+                    print("ТАБЛИЦА List_users")
+                    print(connection.execute("""SELECT * FROM list_users""").fetchall())
+
+                else:
+                    print(f"Смещение offset {count_res}")
+                    flag_city = False
+                    result = search_users(cityId=int(city), offset=count_res, age_from=age[0], age_to=age[1], sex=gender)
+                    count_users, list_id_search = result
+
+
+
+
 
                 for id_ in list_id_search:
                     url = f"https://vk.com/id{id_}"
@@ -106,11 +158,13 @@ for event in longpoll.listen():
                             write_msg(id_user, "", attachemt=f"photo{id_}_{id_image}")
                     write_msg(id_user, "===============================")
 
-                count_res += 20
+                count_res += 5
                 write_msg(id_user, "Продолжить поиск?")
 
             elif request == "пока":
                 write_msg(event.user_id, "Пока((")
             else:
                 write_msg(event.user_id, f"Не поняла Вас, {info_user['first_name']} ...")
+
+
 
