@@ -12,11 +12,11 @@ def write_msg(user_id, message,attachemt=None):
     vk.method('messages.send', {'user_id': user_id, 'message': message, 'random_id': randrange(10 ** 7), 'attachment': attachemt})
 
 
-token = ""
+token = 'ad78baec1a866a6d30a835ad9cdbbdb9b4b94d033bd9740796b67e24e9b976397e39c0c9c7ba5f36d1d6f'
 
 vk = vk_api.VkApi(token=token, api_version='5.131')
 longpoll = VkLongPoll(vk)
-
+print(vk)
 
 
 

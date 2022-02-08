@@ -1,7 +1,7 @@
 import vk_api
 from vk_api import VkUpload
 
-token_my = ""
+token_my = "f4a066c3b3df43f0854502050858f844d973bd67bd73694c868fb110c2524eb6533dd776462db19f57508"
 vk_my = vk_api.VkApi(token=token_my, api_version='5.131')
 
 
